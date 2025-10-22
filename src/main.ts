@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ConsoleLogger, Logger } from '@nestjs/common';
+import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   // Define the port — fallback to 3000 if not set in environment
@@ -11,6 +11,19 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: new ConsoleLogger('FinPay', { timestamp: true }),
   });
+
+  app.enableCors({
+    origin: '*',
+    credentials: true,
+  });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, //strips unknown properties
+      forbidNonWhitelisted: true, // throws error if extra fields are sent
+      transform: true,
+    }),
+  );
 
   // Set a global prefix for all routes (e.g. /api/v1/users)
   app.setGlobalPrefix('api/v1');
