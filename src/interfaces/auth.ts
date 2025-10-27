@@ -6,7 +6,15 @@ export interface JwtPayload {
 }
 
 export interface AuthResponse {
+  success: boolean;
+  message: string;
   accessToken: string;
   refreshToken: string;
-  user: User;
+  user: Partial<User>;
+}
+
+export interface Token {
+  accessToken: string;
+  refreshToken: string;
+  user: Partial<User>;
 }

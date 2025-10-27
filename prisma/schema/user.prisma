@@ -11,6 +11,12 @@ model User {
   phone      String?  @unique
   role       UserRole @default(USER)
   isActive   Boolean  @default(true)
+  refreshToken String? @map("refresh_token")
+
+  @@map("users")
+
+
+
 }
 
 enum UserRole {

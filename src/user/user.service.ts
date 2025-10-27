@@ -39,4 +39,17 @@ export class UserService {
     const { password: _, ...result } = user;
     return result;
   }
+
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string | null,
+  ): Promise<void> {
+    const hashedToken = refreshToken
+      ? await bcrypt.hash(refreshToken, 10)
+      : null;
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: hashedToken },
+    });
+  }
 }
