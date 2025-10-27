@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 
 async function bootstrap() {
   // Define the port — fallback to 3000 if not set in environment
@@ -16,6 +17,8 @@ async function bootstrap() {
     origin: '*',
     credentials: true,
   });
+
+  app.use(helmet());
 
   app.useGlobalPipes(
     new ValidationPipe({
