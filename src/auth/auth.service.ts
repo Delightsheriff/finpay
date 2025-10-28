@@ -77,4 +77,33 @@ export class AuthService {
       refreshToken,
     };
   }
+
+  async logout(userId: string): Promise<void> {
+    await this.userService.updateRefreshToken(userId, null);
+  }
+
+  async refreshTokens(
+    userId: string,
+    refreshToken: string,
+  ): Promise<AuthResponse> {
+    const user = await this.userService.findById(userId);
+    if (!user || !user.refreshToken) {
+      throw new UnauthorizedException('Access Denied');
+    }
+
+    const isTokenValid = await bcrypt.compare(refreshToken, user.refreshToken);
+    if (!isTokenValid) {
+      throw new UnauthorizedException('Access Denied');
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.generateTokens(user.id, user.email);
+    return {
+      success: true,
+      message: 'Tokens refreshed successfully',
+      accessToken,
+      refreshToken: newRefreshToken,
+      user,
+    };
+  }
 }
