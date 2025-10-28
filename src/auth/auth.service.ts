@@ -16,12 +16,11 @@ export class AuthService {
 
   async signUp(data: SignupDto) {
     const user = await this.userService.createUser(data);
-    const payload = { userId: user.id, email: user.email };
     return {
       success: true,
       message:
         'Account created successfully. Please verify your email to continue.',
-      payload,
+      user: user.id,
     };
   }
 

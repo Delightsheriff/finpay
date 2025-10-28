@@ -50,6 +50,7 @@ export class AuthController {
   }
 
   @Get('me')
+  @HttpCode(HttpStatus.OK)
   getProfile(@GetUser() user) {
     return user;
   }
