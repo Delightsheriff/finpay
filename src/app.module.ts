@@ -7,6 +7,9 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_PIPE } from '@nestjs/core';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { WalletController } from './wallet/wallet.controller';
+import { WalletService } from './wallet/wallet.service';
+import { WalletModule } from './wallet/wallet.module';
 
 @Module({
   imports: [
@@ -17,14 +20,16 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     PrismaModule,
     UserModule,
     AuthModule,
+    WalletModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, WalletController],
   providers: [
     AppService,
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
     },
+    WalletService,
   ],
 })
 export class AppModule {
