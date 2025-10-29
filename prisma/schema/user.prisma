@@ -13,6 +13,8 @@ model User {
   isActive   Boolean  @default(true)
   refreshToken String? @map("refresh_token")
 
+  wallet    Wallet[]
+
   @@map("users")
 
 
