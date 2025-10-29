@@ -3,10 +3,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { WalletService } from 'src/wallet/wallet.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly walletService: WalletService,
+  ) {}
 
   async createUser(data: CreateUserDto): Promise<Omit<User, 'password'>> {
     const existingUser = await this.prisma.user.findUnique({
@@ -23,6 +27,8 @@ export class UserService {
         password: hashedPassword,
       },
     });
+
+    await this.walletService.createUserWallets(user.id);
 
     const { password: _, ...result } = user;
     return result;
