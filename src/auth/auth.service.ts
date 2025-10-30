@@ -40,6 +40,7 @@ export class AuthService {
     const { accessToken, refreshToken } = await this.generateTokens(
       user.id,
       user.email,
+      user.role,
     );
     const { password: _, ...result } = user;
     return {
@@ -51,27 +52,28 @@ export class AuthService {
     };
   }
 
-  private async generateTokens(userId: string, email: string): Promise<Token> {
-    const payload = { userId, email };
+  private async generateTokens(
+    userId: string,
+    email: string,
+    role: string,
+  ): Promise<Token> {
+    const payload = { userId, email, role };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get('JWT_SECRET') as string,
-        expiresIn: this.configService.get('JWT_EXPIRES_IN') as unknown as any,
-      } as any),
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
+      }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get('JWT_REFRESH_SECRET') as string,
-        expiresIn: this.configService.get(
-          'JWT_REFRESH_EXPIRES_IN',
-        ) as unknown as any,
-      } as any),
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+      }),
     ]);
 
-    // Store hashed refresh token
     await this.userService.updateRefreshToken(userId, refreshToken);
 
     return {
-      user: { id: userId, email },
+      user: { id: userId, email, role },
       accessToken,
       refreshToken,
     };
@@ -96,7 +98,7 @@ export class AuthService {
     }
 
     const { accessToken, refreshToken: newRefreshToken } =
-      await this.generateTokens(user.id, user.email);
+      await this.generateTokens(user.id, user.email, user.role);
     return {
       success: true,
       message: 'Tokens refreshed successfully',

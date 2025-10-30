@@ -28,7 +28,7 @@ export class UserService {
       },
     });
 
-    await this.walletService.createUserWallets(user.id);
+    await this.walletService.createUserWallet(user.id);
 
     const { password: _, ...result } = user;
     return result;
