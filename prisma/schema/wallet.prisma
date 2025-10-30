@@ -1,32 +1,13 @@
-model Wallet{
-    id         String   @id @default(cuid())
-    createdAt  DateTime @default(now()) @map("created_at")
-    updatedAt  DateTime @updatedAt @map("updated_at")
-
-    balance Decimal @default(0.00) @db.Decimal(19, 4)
-    currency   Currency  @default(NGN)
-
-    accountNumber String   @unique @map("account_number")
-    accountName   String   @map("account_name")
-    walletStatus  WalletStatus @default(ACTIVE) @map("wallet_status")
-    userId     String   @unique @map("user_id")
-    user       User     @relation(fields: [userId], references: [id])
-    
-    @@unique([userId, currency]) 
-    @@index([accountNumber])
-    @@map("wallets")
+model Wallet {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  balances  Balance[]
+  
+  @@map("wallets")
 }
 
-
-enum WalletStatus {
-  ACTIVE
-  FROZEN
-  CLOSED
-}
-
-enum Currency {
-  USD
-  EUR
-  GBP
-  NGN
-}

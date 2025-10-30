@@ -1,0 +1,22 @@
+enum Currency {
+  USD
+  EUR
+  GBP
+  NGN
+}
+
+model Balance {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  walletId  String   @map("wallet_id")
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  currency  Currency
+  balance   Decimal  @default(0.00) @db.Decimal(19, 4)
+  
+  @@unique([walletId, currency])
+  @@index([walletId])
+  @@map("currency_balances")
+}
