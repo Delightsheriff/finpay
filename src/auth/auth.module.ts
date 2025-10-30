@@ -8,9 +8,19 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ENV } from 'src/common/constants/env';
 
 @Module({
-  imports: [UserModule, PassportModule, JwtModule.register({})],
+  imports: [
+    UserModule,
+    PassportModule,
+    JwtModule.register({
+      secret: ENV.JWT_SECRET,
+      signOptions: {
+        expiresIn: ENV.JWT_EXPIRES_IN || '15m',
+      },
+    }),
+  ],
   providers: [
     AuthService,
     JwtStrategy,

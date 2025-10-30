@@ -5,6 +5,7 @@ import { UserService } from 'src/user/user.service';
 import { SignupDto } from './dto/signup.dto';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { ENV } from 'src/common/constants/env';
 
 @Injectable()
 export class AuthService {
@@ -61,22 +62,18 @@ export class AuthService {
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
+        secret: ENV.JWT_SECRET,
+        expiresIn: ENV.JWT_EXPIRES_IN,
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+        secret: ENV.JWT_REFRESH_SECRET,
+        expiresIn: ENV.JWT_REFRESH_EXPIRES_IN,
       }),
     ]);
 
     await this.userService.updateRefreshToken(userId, refreshToken);
 
-    return {
-      user: { id: userId, email, role },
-      accessToken,
-      refreshToken,
-    };
+    return { accessToken, refreshToken };
   }
 
   async logout(userId: string): Promise<void> {
@@ -104,6 +101,18 @@ export class AuthService {
       message: 'Tokens refreshed successfully',
       accessToken,
       refreshToken: newRefreshToken,
+      user,
+    };
+  }
+
+  async fetchUserProfile(userId: string) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return {
+      success: true,
+      message: 'User profile fetched successfully',
       user,
     };
   }

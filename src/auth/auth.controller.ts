@@ -13,7 +13,10 @@ import { SignupDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { Public } from './decorators/public.decorator';
-import { GetUser } from './decorators/get-user.decorator';
+import {
+  type AuthenticatedUser,
+  GetUser,
+} from './decorators/get-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -43,15 +46,14 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Req() req: any) {
-    const user = req.user;
+  async logout(@GetUser() user: AuthenticatedUser) {
     await this.authService.logout(user.id);
     return { message: 'Logged out successfully' };
   }
 
   @Get('me')
   @HttpCode(HttpStatus.OK)
-  getProfile(@GetUser() user) {
-    return user;
+  getProfile(@GetUser() user: AuthenticatedUser) {
+    return this.authService.fetchUserProfile(user.id);
   }
 }
