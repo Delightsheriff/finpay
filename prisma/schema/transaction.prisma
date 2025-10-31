@@ -1,0 +1,54 @@
+model Transaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Who & Where
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  walletId  String   @map("wallet_id")
+  wallet    Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  // What
+  type      TransactionType
+  status    TransactionStatus
+  amount    Decimal  @db.Decimal(19, 4) // Signed: +credit / -debit
+  currency  Currency
+  description String?
+
+  // References
+  reference         String  @unique @default(cuid()) // internal ref
+  externalReference String? @unique @map("external_reference") // External Provider ref
+  
+  // Linking related transactions (e.g., for conversions, transfers)
+  batchId   String? @map("batch_id")
+
+  
+  metadata  Json? // Exchange rates, fees, recipient info, etc.
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([batchId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, walletId, currency, createdAt])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  DEPOSIT
+  CONVERSION
+  WITHDRAWAL
+  TRANSFER
+  PAYMENT
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
