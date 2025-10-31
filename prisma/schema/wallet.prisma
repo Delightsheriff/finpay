@@ -7,6 +7,7 @@ model Wallet {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   balances  Balance[]
+  transactions Transaction[]
   
   @@map("wallets")
 }

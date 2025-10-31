@@ -10,6 +10,8 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { WalletController } from './wallet/wallet.controller';
 import { WalletService } from './wallet/wallet.service';
 import { WalletModule } from './wallet/wallet.module';
+import { TransactionService } from './transaction/transaction.service';
+import { TransactionModule } from './transaction/transaction.module';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { WalletModule } from './wallet/wallet.module';
     UserModule,
     AuthModule,
     WalletModule,
+    TransactionModule,
   ],
   controllers: [AppController, WalletController],
   providers: [
@@ -30,6 +33,7 @@ import { WalletModule } from './wallet/wallet.module';
       useClass: ValidationPipe,
     },
     WalletService,
+    TransactionService,
   ],
 })
 export class AppModule {
