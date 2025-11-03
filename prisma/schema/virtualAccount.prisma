@@ -1,0 +1,32 @@
+model VirtualAccount {
+    id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+   balanceId String   @unique @map("balance_id")
+  balance   Balance  @relation(fields: [balanceId], references: [id], onDelete: Cascade)
+
+  //Account details
+  accountNumber String @unique @map("account_number")
+  accountName   String @map("account_name")
+  bankName      String @map("bank_name")
+  currency     Currency @default(NGN)
+
+  //Provider details
+  provider     String
+  providerAccountId String @unique @map("provider_account_id")
+  providerReference String @unique @map("provider_reference")
+
+  status VirtualAccountStatus @default(ACTIVE)
+
+ @@index([balanceId])
+  @@map("virtual_accounts")
+
+}
+
+
+enum VirtualAccountStatus {
+  ACTIVE
+  INACTIVE
+  CLOSED
+}

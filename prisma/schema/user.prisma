@@ -7,7 +7,6 @@ model User {
   password   String
   firstName  String?  @map("first_name")
   lastName   String?  @map("last_name")
-  middleName String?  @map("middle_name")
   phone      String?  @unique
   role       UserRole @default(USER)
   isActive   Boolean  @default(true)
