@@ -63,6 +63,9 @@ export class WalletService {
       where: { userId },
       include: {
         balances: {
+          include: {
+            virtualAccount: true,
+          },
           orderBy: { currency: 'asc' },
         },
       },
@@ -97,5 +100,23 @@ export class WalletService {
     });
 
     return wallet?.balances || [];
+  }
+
+  /**
+   * Legacy method for creating wallet outside transaction
+   * Consider deprecating this in favor of transaction-based approach
+   */
+  async createUserWallet(userId: string): Promise<Wallet> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      return this.createUserWalletWithTransaction(user, tx);
+    });
   }
 }
