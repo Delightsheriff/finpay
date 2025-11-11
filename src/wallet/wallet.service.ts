@@ -1,6 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Currency, Wallet } from '@prisma/client';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Currency, Prisma, User, Wallet } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserService } from 'src/user/user.service';
+import { VirtualAccountService } from 'src/virtual-account/virtual-account.service';
 
 const DEFAULT_CURRENCIES: Currency[] = [
   Currency.NGN,
@@ -11,21 +17,18 @@ const DEFAULT_CURRENCIES: Currency[] = [
 
 @Injectable()
 export class WalletService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly virtualAccountService: VirtualAccountService,
+  ) {}
 
-  async createUserWallet(userId: string): Promise<Wallet> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return this.prisma.wallet.create({
+  async createUserWalletWithTransaction(
+    user: User,
+    tx: Prisma.TransactionClient,
+  ): Promise<Wallet> {
+    const wallet = await tx.wallet.create({
       data: {
-        userId,
+        userId: user.id,
         balances: {
           create: DEFAULT_CURRENCIES.map((currency) => ({
             currency,
@@ -37,6 +40,22 @@ export class WalletService {
         balances: true,
       },
     });
+
+    const ngnBalance = wallet.balances.find((b) => b.currency === Currency.NGN);
+
+    if (!ngnBalance) {
+      throw new InternalServerErrorException('Failed to create NGN balance');
+    }
+
+    // Create virtual account - this will throw if it fails
+    // The error will bubble up and trigger transaction rollback
+    await this.virtualAccountService.createVirtualAccountWithTransaction(
+      ngnBalance.id,
+      user,
+      tx,
+    );
+
+    return wallet;
   }
 
   async getUserWallet(userId: string) {

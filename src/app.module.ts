@@ -7,11 +7,9 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_PIPE } from '@nestjs/core';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
-import { WalletController } from './wallet/wallet.controller';
-import { WalletService } from './wallet/wallet.service';
 import { WalletModule } from './wallet/wallet.module';
-import { TransactionService } from './transaction/transaction.service';
 import { TransactionModule } from './transaction/transaction.module';
+import { VirtualAccountModule } from './virtual-account/virtual-account.module';
 
 @Module({
   imports: [
@@ -24,16 +22,15 @@ import { TransactionModule } from './transaction/transaction.module';
     AuthModule,
     WalletModule,
     TransactionModule,
+    VirtualAccountModule,
   ],
-  controllers: [AppController, WalletController],
+  controllers: [AppController],
   providers: [
     AppService,
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
     },
-    WalletService,
-    TransactionService,
   ],
 })
 export class AppModule {

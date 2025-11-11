@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from '@prisma/client';
@@ -21,17 +25,44 @@ export class UserService {
     }
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const user = await this.prisma.user.create({
-      data: {
-        ...data,
-        password: hashedPassword,
-      },
-    });
+    try {
+      // Use interactive transaction to ensure atomicity
+      const result = await this.prisma.$transaction(
+        async (tx) => {
+          // Create user
+          const user = await tx.user.create({
+            data: {
+              ...data,
+              password: hashedPassword,
+            },
+          });
 
-    await this.walletService.createUserWallet(user.id);
+          await this.walletService.createUserWalletWithTransaction(user, tx);
 
-    const { password: _, ...result } = user;
-    return result;
+          return user;
+        },
+        {
+          maxWait: 10000, // 10 seconds max wait time
+          timeout: 30000, // 30 seconds timeout
+        },
+      );
+
+      const { password: _, ...userWithoutPassword } = result;
+      return userWithoutPassword;
+    } catch (error) {
+      // Log the error for debugging
+      console.error('Error creating user with wallet:', error);
+
+      // Re-throw specific errors
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+
+      // Wrap unknown errors
+      throw new InternalServerErrorException(
+        'Failed to create user account. Please try again.',
+      );
+    }
   }
 
   async findByEmail(email: string): Promise<User | null> {

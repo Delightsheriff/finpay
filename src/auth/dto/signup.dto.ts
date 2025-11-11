@@ -20,9 +20,5 @@ export class SignupDto {
 
   @IsNotEmpty()
   @IsString()
-  middleName: string;
-
-  @IsNotEmpty()
-  @IsString()
   phone: string;
 }
