@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthResponse, JwtPayload, Token } from 'src/interfaces/auth';
 import { UserService } from 'src/user/user.service';
@@ -16,13 +21,30 @@ export class AuthService {
   ) {}
 
   async signUp(data: SignupDto) {
-    const user = await this.userService.createUser(data);
-    return {
-      success: true,
-      message:
-        'Account created successfully. Please verify your email to continue.',
-      user: user.id,
-    };
+    try {
+      // This will now either fully succeed or fully rollback
+      const user = await this.userService.createUser(data);
+
+      return {
+        success: true,
+        message:
+          'Account created successfully. Your wallet and virtual account are ready to use.',
+        user: user.id,
+      };
+    } catch (error) {
+      // Handle specific error types
+      if (error instanceof ConflictException) {
+        throw error; // Re-throw conflict errors (email already exists)
+      }
+
+      // Log unexpected errors for debugging
+      console.error('Signup error:', error);
+
+      // Return user-friendly error message
+      throw new InternalServerErrorException(
+        'Unable to create account at this time. Please try again later or contact support if the issue persists.',
+      );
+    }
   }
 
   async signIn(email: string, password: string): Promise<AuthResponse> {
@@ -38,19 +60,28 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { accessToken, refreshToken } = await this.generateTokens(
-      user.id,
-      user.email,
-      user.role,
-    );
-    const { password: _, ...result } = user;
-    return {
-      success: true,
-      message: 'Login successful',
-      accessToken,
-      refreshToken,
-      user: result,
-    };
+    try {
+      const { accessToken, refreshToken } = await this.generateTokens(
+        user.id,
+        user.email,
+        user.role,
+      );
+
+      const { password: _, ...result } = user;
+
+      return {
+        success: true,
+        message: 'Login successful',
+        accessToken,
+        refreshToken,
+        user: result,
+      };
+    } catch (error) {
+      console.error('Token generation error:', error);
+      throw new InternalServerErrorException(
+        'Unable to complete login. Please try again.',
+      );
+    }
   }
 
   private async generateTokens(
@@ -60,24 +91,36 @@ export class AuthService {
   ): Promise<Token> {
     const payload = { userId, email, role };
 
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        secret: ENV.JWT_SECRET,
-        expiresIn: ENV.JWT_EXPIRES_IN,
-      }),
-      this.jwtService.signAsync(payload, {
-        secret: ENV.JWT_REFRESH_SECRET,
-        expiresIn: ENV.JWT_REFRESH_EXPIRES_IN,
-      }),
-    ]);
+    try {
+      const [accessToken, refreshToken] = await Promise.all([
+        this.jwtService.signAsync(payload, {
+          secret: ENV.JWT_SECRET,
+          expiresIn: ENV.JWT_EXPIRES_IN,
+        }),
+        this.jwtService.signAsync(payload, {
+          secret: ENV.JWT_REFRESH_SECRET,
+          expiresIn: ENV.JWT_REFRESH_EXPIRES_IN,
+        }),
+      ]);
 
-    await this.userService.updateRefreshToken(userId, refreshToken);
+      await this.userService.updateRefreshToken(userId, refreshToken);
 
-    return { accessToken, refreshToken };
+      return { accessToken, refreshToken };
+    } catch (error) {
+      console.error('Error generating tokens:', error);
+      throw new InternalServerErrorException(
+        'Failed to generate authentication tokens',
+      );
+    }
   }
 
   async logout(userId: string): Promise<void> {
-    await this.userService.updateRefreshToken(userId, null);
+    try {
+      await this.userService.updateRefreshToken(userId, null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Don't throw error on logout failure - user intent is clear
+    }
   }
 
   async refreshTokens(
@@ -94,15 +137,21 @@ export class AuthService {
       throw new UnauthorizedException('Access Denied');
     }
 
-    const { accessToken, refreshToken: newRefreshToken } =
-      await this.generateTokens(user.id, user.email, user.role);
-    return {
-      success: true,
-      message: 'Tokens refreshed successfully',
-      accessToken,
-      refreshToken: newRefreshToken,
-      user,
-    };
+    try {
+      const { accessToken, refreshToken: newRefreshToken } =
+        await this.generateTokens(user.id, user.email, user.role);
+
+      return {
+        success: true,
+        message: 'Tokens refreshed successfully',
+        accessToken,
+        refreshToken: newRefreshToken,
+        user,
+      };
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      throw new InternalServerErrorException('Failed to refresh tokens');
+    }
   }
 
   async fetchUserProfile(userId: string) {
@@ -110,6 +159,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
+
     return {
       success: true,
       message: 'User profile fetched successfully',
