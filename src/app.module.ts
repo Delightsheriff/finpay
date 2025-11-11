@@ -10,6 +10,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { WalletModule } from './wallet/wallet.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { VirtualAccountModule } from './virtual-account/virtual-account.module';
+import { ExchangeRateModule } from './exchange-rate/exchange-rate.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { VirtualAccountModule } from './virtual-account/virtual-account.module';
     WalletModule,
     TransactionModule,
     VirtualAccountModule,
+    ExchangeRateModule,
   ],
   controllers: [AppController],
   providers: [

@@ -11,6 +11,7 @@ interface IENV {
     FLW_SECRET_KEY: string;
     FLW_ENCRYPTION_KEY: string;
   };
+  EXCHANGE_RATE_API_KEY: string;
 }
 
 export const ENV: IENV = {
@@ -24,4 +25,5 @@ export const ENV: IENV = {
     FLW_SECRET_KEY: process.env.FLW_SECRET_KEY!,
     FLW_ENCRYPTION_KEY: process.env.FLW_ENCRYPTION_KEY!,
   },
+  EXCHANGE_RATE_API_KEY: process.env.EXCHANGE_RATE_API_KEY!,
 };
