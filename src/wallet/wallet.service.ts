@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { Currency, Prisma, User, Wallet } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserService } from 'src/user/user.service';
 import { VirtualAccountService } from 'src/virtual-account/virtual-account.service';
 
 const DEFAULT_CURRENCIES: Currency[] = [
